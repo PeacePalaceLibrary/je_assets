@@ -1,5 +1,8 @@
 *.bak
 *.log
 *.log
+settings.php
+settings.js
+key_idm.php
 
 
