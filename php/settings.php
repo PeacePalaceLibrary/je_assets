@@ -22,6 +22,13 @@ define("JE_DB_PW", "pplgrotius");
 define("JE_DB_NAME", "librarycard");
 define("JE_TABLE_NAME", "patrons");
 
+define("JE_MAIL_HOST", "smtp.office365.com");
+define("JE_MAIL_USER", "h.groot@ppl.nl");
+define("JE_MAIL_PW", "Herfststorm7");
+define("JE_MAIL_FROM","webteam@ppl.nl");
+define("JE_MAIL_From2","PeacePalaceLibrary");
+define("JE_MAIL_SUBJ","Peace Palace Library card");
+
 // development
 define("JE_ACT_URL", "localhost/oclcAPIs/register/activation.php");
 // production

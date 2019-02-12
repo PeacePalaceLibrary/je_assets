@@ -543,18 +543,18 @@ function send_mail($type, $username, $email, $codes) {
   require_once('class.phpmailer.php');
   require_once('class.smtp.php');
 
-/*  $mail = new PHPMailer();
+  $mail = new PHPMailer();
   $mail->IsSMTP(); // telling the class to use SMTP
   $mail->SMTPDebug = false;
-  $mail->Host = "smtp.office365.com";
+  $mail->Host = JE_MAIL_HOST;
   $mail->Port = 587;
   $mail->SMTPSecure = "tls";
   $mail->SMTPAuth = true;
-  $mail->Username = "h.groot@ppl.nl";
-  $mail->Password = "Herfststorm7";
+  $mail->Username = JE_MAIL_USER;
+  $mail->Password = JE_MAIL_PW;
   $mail->SMTPDebug  = 1; // enables SMTP debug information (for testing) 1 = errors and messages $
-  $mail->SetFrom('webteam@ppl.nl', 'PeacePalaceLibrary');
-  $mail->Subject = "Peace Palace Library card";
+  $mail->SetFrom(JE_MAIL_FROM,JE_MAIL_From2);
+  $mail->Subject = JE_MAIL_SUBJ;
   $mail->Body = $message;
   $mail->AltBody = $alt_message;
   //$mail->MsgHTML($message);
@@ -565,6 +565,5 @@ function send_mail($type, $username, $email, $codes) {
   else {
     return FALSE;
   }
-  */
 }
 
