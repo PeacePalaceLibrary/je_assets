@@ -38,7 +38,6 @@ function watchAlerts() {
 
 //further initialization after the form is generated
 editor.on('ready',function() {
-  alert(registerUrl);
   editor.show_errors = 'change';  //interaction (default), change, always, never
 
   //hide dependent fields

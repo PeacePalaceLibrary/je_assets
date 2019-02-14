@@ -1,4 +1,4 @@
-/* 
+/*
 * Schema for registration and account form
 */
 
@@ -162,14 +162,60 @@ regSchemaObj =
           enum: ["","Yes","No"]
         },
         alertSubjects: {
-          type: "array",
-          format: "checkbox",
-          uniqueItems: true,
-          items: {
-            type: "string",
-            enum:subjectList
-          },
-          title: "Alert subjects."
+          type: "object",
+          title: "Alert subjects.",
+          properties: {
+            pubIntLaw: {
+              type: "array",
+              format: "checkbox",
+              uniqueItems: true,
+              items: {
+                type: "string",
+                enum:subjectsPubIntLaw
+              },
+              title: "Public internationa law."
+            },
+            privIntLaw: {
+              type: "array",
+              format: "checkbox",
+              uniqueItems: true,
+              items: {
+                type: "string",
+                enum:subjectsPrivIntLaw
+              },
+              title: "Private internationa law."
+            },
+            munCompLaw: {
+              type: "array",
+              format: "checkbox",
+              uniqueItems: true,
+              items: {
+                type: "string",
+                enum:subjectsMunCompLaw
+              },
+              title: "Municipal law and comparative law."
+            },
+            other: {
+              type: "array",
+              format: "checkbox",
+              uniqueItems: true,
+              items: {
+                type: "string",
+                enum:subjectsOther
+              },
+              title: "Other subjects."
+            },
+            special: {
+              type: "array",
+              format: "checkbox",
+              uniqueItems: true,
+              items: {
+                type: "string",
+                enum:subjectsSpecial
+              },
+              title: "Special subjects."
+            }
+          }
         }
       }
     }
