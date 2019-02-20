@@ -11,7 +11,8 @@ var editorProperties =
   no_additional_properties: true,
   disable_edit_json: true,
   disable_properties: true,
-  disable_collapse: true
+  disable_collapse: true,
+  //show_errors: 'never'
   //remove_empty_properties:true,
 };
 var editor = new JSONEditor(document.getElementById('editor'),editorProperties);
@@ -38,7 +39,7 @@ function watchAlerts() {
 
 //further initialization after the form is generated
 editor.on('ready',function() {
-  editor.show_errors = 'change';  //interaction (default), change, always, never
+  //editor.options.show_errors = 'never';  //interaction (default), change, always, never
 
   //hide dependent fields
   jQuery('div[data-schemapath="root.services.membershipPeriod"]').css("display","none");
@@ -61,13 +62,18 @@ editor.on('ready',function() {
       if (debug) console.log(errors);
       msg = '<p>Your request has NOT been sent. Correct the following fields:';
       errors.forEach(function(err) {
-        msg += '- ' + editor.getEditor(err.path).schema.title + ': ' + err.message + '<br/>';
+        var fname = editor.getEditor(err.path).schema.title;
+        var parts = err.path.split('.');
+        if ((parts.length > 2) && (parts[1] == 'services')) {
+          fname = 'Services';
+        }
+        msg += '- ' + fname + ': ' + err.message + '<br/>';
       });
       msg += '</p>'
       jQuery('#res').html(msg);
     }
     else {
-      msg = '<p>Your registration is being processed. Please wait...</p>';
+      msg = '<p>Your registration is being processed. Please wait...<div class="spinner" /></p>';
       jQuery('#res').html(msg);
 
       // Get the values from the editor

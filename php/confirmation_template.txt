@@ -1,0 +1,38 @@
+Dear customer,
+
+Thank you for registering.
+{% if services.membership|length > 2 %}  
+Please find your Library card number below.
+user name  : {{username}}
+card number: {{barcode}}
+
+You can now make reservations and borrow books from our library. 
+Visit our catalogue at http://catalogue.ppl.nl/
+
+Please visit the library to obtain your library card and get access to online available publications. 
+You will have to show this email for verification.
+Don't forget you need a valid ID when coming to the library. 
+{% endif %}
+{% if services.receiveMails|length > 2 %}  
+You will receive e-mails from our library.
+
+{% endif %}
+{% if services.receiveNews|length > 2 %}  
+You will receive newsletters from our library.
+
+{% endif %}
+{% if services.receiveAlerts|length > 2 %}  
+You will receive alerts from our library.
+{% endif %}
+
+Kind regards,
+
+Peace Palace Library, 
+Reading Room Staff
+website: http://www.peacepalacelibrary.nl
+e-mail: peacelib@ppl.nl  
+telephone: +31-(0)70-3024242  
+
+read our privacy policy: http://www.peacepalacelibrary.nl/privacy/
+
+If, for any reason, you are getting this e-mail by mistake, please hit the reply button and tell us to unsubscribe. Sorry for the inconvenience.

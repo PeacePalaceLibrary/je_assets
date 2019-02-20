@@ -1,0 +1,11 @@
+Dear customer,
+
+Thank you for applying for a library card online.
+Please copy the following URL in your browser:
+{{url}}?je_ac={{code}}
+
+Once your account is activated you will receive a confirmation email.
+(If nothing seems to happen, please also check your spam box).
+
+Kind regards,  
+Peace Palace Library

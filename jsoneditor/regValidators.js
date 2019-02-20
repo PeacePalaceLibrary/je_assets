@@ -1,4 +1,5 @@
 // Custom validators must return an array of errors or an empty array if valid
+
 JSONEditor.defaults.custom_validators.push(function(schema, value, path) {
   var errors = [];
   if(schema.format==="datebirth") {
@@ -82,5 +83,24 @@ JSONEditor.defaults.custom_validators.push(function(schema, value, path) {
   return errors;
 });
 
+JSONEditor.defaults.custom_validators.push(function(schema, value, path) {
+  var errors = [];
+
+  if(schema.id === "receiveAlerts") {
+    var checkmembership = (this.jsoneditor.getEditor("root.services.membership").value == 'Yes');
+    var checkreceiveMails = (this.jsoneditor.getEditor("root.services.receiveMails").value == 'Yes');
+    var checkreceiveNews = (this.jsoneditor.getEditor("root.services.receiveNews").value == 'Yes');
+    var checkreceiveAlerts = (this.jsoneditor.getEditor("root.services.receiveAlerts").value == 'Yes');
+
+    if(!(checkmembership || checkreceiveMails || checkreceiveNews || checkreceiveAlerts)) {
+      errors.push({
+        path: path,
+        property: 'services',
+        message: 'You have to choose one of our services.'
+      });
+    }
+  }
+  return errors;
+});
 
 

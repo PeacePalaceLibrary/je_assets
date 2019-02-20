@@ -93,7 +93,8 @@ regSchemaObj =
         },
         research: {
           type: "string",
-          title: "Research subject"
+          title: "Research project",
+          description: "If applicable, please share a short description or your research project."
         }
       }
     },
@@ -133,6 +134,7 @@ regSchemaObj =
       }
     },
     services: {
+      id: "services",
       type: "object",
       title: "Library services",
       properties: {
@@ -157,6 +159,7 @@ regSchemaObj =
           enum: ["","Yes","No"]
         },
         receiveAlerts: {
+          id: "receiveAlerts",
           type: "select",
           title: "Do you want to receive alerts from the library?",
           enum: ["","Yes","No"]

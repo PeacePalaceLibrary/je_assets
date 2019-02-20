@@ -1,4 +1,7 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 require_once(__DIR__.'/settings.php');
 require_once(__DIR__.'/patron.php');
 
@@ -202,70 +205,71 @@ function delete_customer($userName) {
 */
 function new_customer($json) {
   $result = array();
+  $errors = array();
+  
   $mysqli = new mysqli(JE_DB_HOST,JE_DB_USER,JE_DB_PW,JE_DB_NAME);
   if (!$mysqli) {
-    $result['error'] = 'No connection';
+    $errors[] = 'No connection';
+    //echo 'No connection';
   }
   else {
     $q = "SELECT * FROM ".JE_TABLE_NAME." WHERE userName='".$json['id']['userName']."'";
     $res = $mysqli->query($q);
     if ($res === FALSE) {
       //SQL statement failed
-      $result['error'] = 'mysqli_error: '.mysqli_error($mysqli);
+      $errors[] = 'mysqli_error: '.mysqli_error($mysqli);
+      //echo 'mysqli_error: '.mysqli_error($mysqli);
     }
     else {
       if ($res->num_rows > 0) {
         //this must be a new customer
         $res->data_seek(0);
         $row = $res->fetch_assoc();
-        $result['error'] = 'Username: '.$row['userName'].' already registered.';
+        $errors[] = 'Username: '.$row['userName'].' already registered.';
+        //echo 'Username: '.$row['userName'].' already registered.';
       }
       else {
-        $barcode = new_barcode($json['id']['userName']);
-        //check max 20 times in WMS whether the barcode already exists
-        $repeat = 0;
-        $max_repeats = 20;
-        while (wms_barcode_exists($barcode) && ($repeat < $max_repeats)) {
-          $repeat++;
-          $barcode = new_barcode($json['id']['userName']);
-        }
-
-        if ($repeat < $max_repeats) {
-          //barcode is indeed new in WMS
-          $ppid = wms_create($barcode,$json);
-
-          $code = hash('sha256',time().time());
-          if (strlen($ppid) > 0) {
-            $q = "INSERT INTO ".JE_TABLE_NAME." (userName, passwd, json, activated, activationCode, datetime, ppid, barcode) VALUES (".
-            "'".$json['id']['userName']."',".
-            "'".$json['id']['password']."',".
-            "'".json_encode($json)."',".
-            "FALSE,".
-            "'".$code."',".
-            "now(),".
-            "'".$ppid."',".
-            "'".$barcode."'".
-            ")";
-            $res = $mysqli->query($q);
-            if ($res === FALSE) {
-              $result['error'] = 'mysqli_error: '.mysqli_error($mysqli);
-            }
-            else {
-              $result = array('code' => $code,'barcode' => $barcode);
-              send_mail('activation',$json['id']['userName'],$json['person']['email'],$result);
-            }
+        //not registered yet:
+        $ppid = '';
+        $barcode = '';
+        if ($json['services']['membership'] == 'Yes' ) {
+          //try to register in WMS
+          $barcode = wms_get_new_barcode($json);
+          if (strlen($barcode) == 0) {
+            $errors[] = 'Could not generate a unique barcode.';
           }
           else {
-            $result['error'] = 'wms_create failed.';
+            //barcode is indeed new in WMS
+            $ppid = wms_create($barcode,$json);
+            if (strlen($ppid) > 0) $errors[] = 'wms_create failed.';
           }
         }
+        
+        //register in MySQL
+        $code = hash('sha256',time().time());
+        $q = "INSERT INTO ".JE_TABLE_NAME." (userName, passwd, json, activated, activationCode, datetime, ppid, barcode) VALUES (".
+        "'".$json['id']['userName']."',".
+        "'".$json['id']['password']."',".
+        "'".json_encode($json)."',".
+        "FALSE,".
+        "'".$code."',".
+        "now(),".
+        "'".$ppid."',".
+        "'".$barcode."'".
+        ")";
+        $res = $mysqli->query($q);
+        if ($res === FALSE) {
+          $errors[] = 'mysqli_error: '.mysqli_error($mysqli);
+        }
         else {
-          $result['error'] = 'Could not generate a unique barcode.';
+          $result = array('code' => $code,'barcode' => $barcode);
+          send_mail('activation',$json,$result);
         }
       }
     }
     mysqli_close($mysqli);
   }
+  if (count($errors) > 0) $result['error'] = implode(' -+- ', $errors);
   return $result;
 }
 
@@ -279,62 +283,112 @@ function new_customer($json) {
 */
 function activate_customer($ppid, $userName, $barcode, $json) {
   $result = '';
-  $result = wms_activate($ppid, $barcode, $json);
-  if ($result) {
-    //update customer in databse
-    $code = '0';
-    $mysqli = new mysqli(JE_DB_HOST,JE_DB_USER,JE_DB_PW,JE_DB_NAME);
-    if (!$mysqli) {
-      $result = FALSE;
-    }
-    else {
-      //now change record 
-      $code = hash('sha256',time().time());
-      $q = "UPDATE ".JE_TABLE_NAME." SET ".
-      "activationCode='$code', ".
-      "activated=TRUE,".
-      "datetime=NOW()".
-      "WHERE userName='".$userName."'";
-      $result = $mysqli->query($q);
-    }
-    mysqli_close($mysqli);
-
-    if ($result === TRUE) send_mail('barcode',$userName,$json['person']['email'],array('barcode' => $barcode,'code' => $code));
+  if ($json['services']['membership'] == 'Yes' ) {
+    //change some things in WMS
+    $wms_ok = wms_activate($ppid, $barcode, $json);
+    //if (!$wms_ok) ....
   }
+
+  //update customer in databse
+  $code = '0';
+  $mysqli = new mysqli(JE_DB_HOST,JE_DB_USER,JE_DB_PW,JE_DB_NAME);
+  if (!$mysqli) {
+    $result = FALSE;
+  }
+  else {
+    //now change record
+    $code = hash('sha256',time().time());
+    $q = "UPDATE ".JE_TABLE_NAME." SET ".
+    "activationCode='$code', ".
+    "activated=TRUE,".
+    "datetime=NOW()".
+    "WHERE userName='".$userName."'";
+    $result = $mysqli->query($q);
+  }
+  mysqli_close($mysqli);
+
+  if ($result === TRUE) send_mail('confirmation',$json, array('barcode' => $barcode,'code' => $code));
   return $result;
 }
 
-function update_customer($json) {
-  $result = '';
-  //get customer from database
-  $row = get_customer_from_userName($json['id']['userName']);
+function update_customer($changed_json) {
+  $result = array();
+  $errors = array();
 
-  $result = wms_update($row['ppid'], $row['barcode'], json_decode($row['json'],TRUE));
-  if ($result) {
-    //update customer in databse
-    $code = '0';
-    $mysqli = new mysqli(JE_DB_HOST,JE_DB_USER,JE_DB_PW,JE_DB_NAME);
-    if (!$mysqli) {
-      $result = FALSE;
+  //the users are not allowed to change their userName
+  //so get customer from database
+  $old_row = get_customer_from_userName($changed_json['id']['userName']);
+  $old_json = json_decode($old_row['json'],TRUE);
+
+  //first handle WMS
+  $new_member = FALSE;
+  $ppid = $old_row['ppid'];
+  $barcode = $old_row['barcode'];
+  if (strlen($old_row['ppid']) > 0) {
+    //the user is present in WMS
+    if ($changed_json['services']['membership'] == 'No') {
+      //the user wants to stop membership
+      $ppid = '';
+      $barcode = '';
+      //update in WMS?
     }
     else {
-      //now change record (passwd, json, activationCode, datetime)
-      $code = hash('sha256',time().time());
-      $q = "UPDATE ".JE_TABLE_NAME." SET ".
-      "passwd='".$json['id']['password']."', ".
-      "json='".json_encode($json)."',".
-      "activationCode='$code',".
-      "datetime=NOW()".
-      "WHERE userName='".$json['id']['userName']."'";
-      $result = $mysqli->query($q);
+      //update WMS, ppid and barcode stay the same
+      $wms_ok = wms_update($ppid, $barcode, $changed_json);
     }
-    mysqli_close($mysqli);
+  }
+  else {
+    //the user is not in WMS
+    if ($changed_json['services']['membership'] == 'Yes') {
+      //but wants a membership
+      $new_member = TRUE;
+          //try to register in WMS
+          $barcode = wms_get_new_barcode($changed_json);
+          if (strlen($barcode) == 0) {
+            $errors[] = 'Could not generate a unique barcode.';
+          }
+          else {
+            //barcode is indeed new in WMS
+            $ppid = wms_create($barcode,$changed_json);
+            if (strlen($ppid) > 0) $errors[] = 'wms_create failed.';
+          }
 
-    //send email?? -- if ($result === TRUE) send_mail('change',$userName,$json['person']['email'],array('barcode' => $barcode,'code' => $code));
+    }
+    else {
+      //nothing to do in WMS
+    }
   }
 
-  return $result;
+  //then handle the database
+  //update customer in databse
+  $mysqli = new mysqli(JE_DB_HOST,JE_DB_USER,JE_DB_PW,JE_DB_NAME);
+  if (!$mysqli) {
+    $errors[] = 'No connection';
+  }
+  else {
+    //now change record (passwd, json, activationCode, datetime)
+    $code = hash('sha256',time().time());
+    $q = "UPDATE ".JE_TABLE_NAME." SET ".
+    "passwd='".$changed_json['id']['password']."', ".
+    "json='".json_encode($changed_json)."',".
+    "activationCode='$code',".
+    "ppid='$ppid',".
+    "barcode='$barcode',".
+    "datetime=NOW()".
+    "WHERE userName='".$changed_json['id']['userName']."'";
+    $res = $mysqli->query($q);
+    if ($res === FALSE) {
+      $errors[] = 'mysqli_error: '.mysqli_error($mysqli);
+    }
+    else {
+      $result = array('code' => $code,'barcode' => $barcode);
+      if ($new_member) send_mail('confirmation',$changed_json,$result);
+    }
+  }
+  mysqli_close($mysqli);
 
+  if (count($errors) > 0) $result['error'] = implode(' -+- ', $errors);
+  return $result;
 }
 
 /*
@@ -366,9 +420,23 @@ function new_barcode($userName) {
   return '90'.substr($newhash, 0, 8);
 }
 
+function wms_get_new_barcode($json) {
+  $barcode = new_barcode($json['id']['userName']);
+  //check max 20 times in WMS whether the barcode already exists
+  $max_repeats = 20;
+  $repeat = 0;
+  while (wms_barcode_exists($barcode) && ($repeat < $max_repeats)) {
+    $repeat++;
+    $barcode = new_barcode($json['id']['userName']);
+  }
+  if ($repeat >= $max_repeats) $barcode = '';
+  return $barcode;
+}
+
 /*
 * checks whether the barcode is already used in WMS 
 *
+* returns TRUE or FALSE
 */
 function wms_barcode_exists($barcode){
   $patron = new Patron();
@@ -416,6 +484,7 @@ function wms_create($barcode,$json) {
 * activates a new customer in WMS
 * meaning that blocked is set to FALSE and verified to TRUE
 * 
+* returns TRUE or FALSE
 */
 function wms_activate($ppid, $barcode, $json){
   $json['extra'] = array(
@@ -441,6 +510,11 @@ function wms_activate($ppid, $barcode, $json){
   return array_key_exists('id',$patron->update) ? TRUE : FALSE;
 }
 
+/*
+* updates a customer in WMS
+*
+* returns TRUE or FALSE
+*/
 function wms_update($ppid, $barcode, $json) {
   $json['extra'] = array(
   'country' => get_countrycode($json['address']['country']),
@@ -461,7 +535,6 @@ function wms_update($ppid, $barcode, $json) {
   //file_put_contents('form_response.json',json_encode($patron->update, JSON_PRETTY_PRINT));
 
   return array_key_exists('id',$patron->update) ? TRUE : FALSE;
-  
 }
 
 
@@ -481,68 +554,30 @@ function get_countrycode($country) {
 * and for confirmation of avtivation:
 *  $type = barcode
 */
-function send_mail($type, $username, $email, $codes) {
+function send_mail($type, $json, $codes) {
+  $loader = new Twig_Loader_Filesystem(__DIR__);
+  $twig = new Twig_Environment($loader, array(
+  //specify a cache directory only in a production setting
+  //'cache' => './compilation_cache',
+  ));
   if ($type == 'activation') {
-    $alt_message = "Dear customer,\n\n".
-    "Thank you for applying for a library card online.\n".
-    "Please copy the following URL in your browser:\n\n".
-    JE_ACT_URL."?je_ac=".$codes['code']."\n\n".
-    "Once your account is activated you will receive your username and password. (If nothing seems to happen, please also check your spam box).\n\n".
-    "Kind regards,\n".
-    "Peace Palace Library\n\n\n".
-    '-- '.$codes['code'].' --';
-    
-    $message = '<p>Dear customer,</p>'.
-    '<p>Thank you for applying for a library card online.</p>'.
-    '<p>Please click on this <a href="'.JE_ACT_URL.'?je_ac='.$codes['code'].'">link</a> to activate your account.</p>'.
-    '<p>You can alsp copy the following URL in your browser:<br/>'.
-    JE_ACT_URL.'?je_ac='.$codes['code'].'</p>'.
-    '<p>Once your account is activated you will receive your username and password. (If nothing seems to happen, please also check your spam box).</p><br/>'.
-    '<p>Kind regards,<br/>'.
-    'Peace Palace Library</p><br/>';
-    '-- '.$codes['code'].' --';
+    $twigins = array('url' => JE_ACT_URL, 'code' => $codes['code']);
+    $alt_message = $twig->render('activation_template.txt', $twigins);
+    $message = $twig->render('activation_template.html', $twigins);
   }
-  else if ($type == 'barcode') {
-    $alt_message = "Dear customer,\n\n".
-    "Please find your Library card number below.\n\n".
-    "user name  : ".$username."\n\n".
-    "card number: ".$codes['barcode']."\n\n".
-    "You can now make reservations and borrow books from our library. Visit our catalogue at http://catalogue.ppl.nl/\n\n".
-    "Please visit the library to obtain a library card and access to online available publications. You will have to show this email for verification.\n\n".
-    "Don't forget you need a valid ID when coming to the library. Your books are kept for 3 working days.\n\n".
-    "Kind regards,\n\n".
-    "Peace Palace Library, Reading Room Staff\n\n".
-    "website: http://www.peacepalacelibrary.nl\n".
-    "e-mail: peacelib@ppl.nl\n".
-    "telephone: +31-(0)70-3024242\n".
-    "read our privacy policy: http://www.peacepalacelibrary.nl/privacy/\n\n\n".
-    "----------------\n".
-    "If, for any reason, you are getting this e-mail by mistake, please hit the reply button and tell us to unsubscribe. Sorry for the inconvenience.\n\n\n".
-    '<< '.$codes['code'].'  >>';
-    
-    $message = 'Dear customer,</p>'.
-    '<p>Please find your Library card number below.</p>'.
-    '<p>user name  : '.$username.'<br/>'.
-    'card number: '.$codes['barcode'].'</p>'.
-    '<p>You can now make reservations and borrow books from our library. Visit our catalogue at <a href="http://catalogue.ppl.nl/">http://catalogue.ppl.nl/</a></p>'.
-    '<p>Please visit the library to obtain a library card and access to online available publications. You will have to show this email for verification.</p>'.
-    '<p>Do not forget you need a valid ID when coming to the library. Your books are kept for 3 working days.</p>'.
-    '<p>Kind regards,</p>'.
-    '<p>Peace Palace Library, Reading Room Staff</p>'.
-    '<p>website: http://www.peacepalacelibrary.nl</p>'.
-    '<p>e-mail: peacelib@ppl.nl</p>'.
-    '<p>telephone: +31-(0)70-3024242</p>'.
-    '<p>read our privacy policy: http://www.peacepalacelibrary.nl/privacy/</p>'.
-    '<p>----------------</p>'.
-    '<p>If, for any reason, you are getting this e-mail by mistake, please hit the reply button and tell us to unsubscribe. Sorry for the inconvenience.</p><br/>'.
-    '<< '.$codes['code'].'  >>';
+  else if ($type == 'confirmation') {
+    $twigins = array('username' => $json['id']['userName'],'barcode' => $codes['barcode'], 'services' => $json['services']);
+    $alt_message = $twig->render('confirmation_template.txt', $twigins);
+    $message = $twig->render('confirmation_template.html', $twigins);
   }
   else {
     return FALSE;
   }
+  echo $message;
+  echo $alt_message;
   require_once('class.phpmailer.php');
   require_once('class.smtp.php');
-
+/*
   $mail = new PHPMailer();
   $mail->IsSMTP(); // telling the class to use SMTP
   $mail->SMTPDebug = false;
@@ -565,5 +600,7 @@ function send_mail($type, $username, $email, $codes) {
   else {
     return FALSE;
   }
+  */
+  return TRUE;
 }
 
