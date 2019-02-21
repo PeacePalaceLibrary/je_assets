@@ -1,10 +1,11 @@
 <?php
+//debugging, in production delete these 3 lines
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
+
 require_once(__DIR__.'/settings.php');
 require_once(__DIR__.'/patron.php');
-
 
 /*
 * generates a new sha256 hash code
@@ -307,7 +308,10 @@ function activate_customer($ppid, $userName, $barcode, $json) {
   }
   mysqli_close($mysqli);
 
-  if ($result === TRUE) send_mail('confirmation',$json, array('barcode' => $barcode,'code' => $code));
+  if ($result === TRUE) {
+    send_mail('confirmation',$json, array('barcode' => $barcode,'code' => $code));
+    //if ($json['services']['receiveNews'] =='Yes') send mail naar "Janneke" van M&C om over te typen in procurios
+  }
   return $result;
 }
 
@@ -599,13 +603,15 @@ function send_mail($type, $json, $codes) {
   $mail->AltBody = $alt_message;
   //$mail->MsgHTML($message);
   
+  $recipient = $json['id']['userName'];
+
   //debugging: delete the following 3 lines in production
-  $email = 'f.latum@ppl.nl';
+  $recipient = 'f.latum@ppl.nl';
   $mail->AddCC('a.janson@ppl.nl');
   $mail->AddCC('j.verweij@ppl.nl');
   
   
-  $mail->AddAddress($email);
+  $mail->AddAddress($recipient);
   if($mail->Send()) {
     return TRUE;
   }

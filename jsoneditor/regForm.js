@@ -73,6 +73,7 @@ editor.on('ready',function() {
       jQuery('#res').html(msg);
     }
     else {
+      //send to ajax script
       msg = '<p>Your registration is being processed. Please wait...<span class="spinner" /></p>';
       jQuery('#res').html(msg);
 
