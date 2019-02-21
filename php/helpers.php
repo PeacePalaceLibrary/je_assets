@@ -368,10 +368,12 @@ function update_customer($changed_json) {
   else {
     //now change record (passwd, json, activationCode, datetime)
     $code = hash('sha256',time().time());
+
     $q = "UPDATE ".JE_TABLE_NAME." SET ".
     "passwd='".$changed_json['id']['password']."', ".
     "json='".json_encode($changed_json)."',".
     "activationCode='$code',".
+    "activated=$activated,".
     "ppid='$ppid',".
     "barcode='$barcode',".
     "datetime=NOW()".
