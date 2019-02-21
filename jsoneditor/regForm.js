@@ -73,7 +73,7 @@ editor.on('ready',function() {
       jQuery('#res').html(msg);
     }
     else {
-      msg = '<p>Your registration is being processed. Please wait...<div class="spinner" /></p>';
+      msg = '<p>Your registration is being processed. Please wait...<span class="spinner" /></p>';
       jQuery('#res').html(msg);
 
       // Get the values from the editor

@@ -241,7 +241,7 @@ function new_customer($json) {
           else {
             //barcode is indeed new in WMS
             $ppid = wms_create($barcode,$json);
-            if (strlen($ppid) > 0) $errors[] = 'wms_create failed.';
+            if (strlen($ppid) == 0) $errors[] = 'wms_create failed.';
           }
         }
         
@@ -283,7 +283,7 @@ function new_customer($json) {
 */
 function activate_customer($ppid, $userName, $barcode, $json) {
   $result = '';
-  if ($json['services']['membership'] == 'Yes' ) {
+  if ($json['services']['membership'] == 'Yes' ) { 
     //change some things in WMS
     $wms_ok = wms_activate($ppid, $barcode, $json);
     //if (!$wms_ok) ....
@@ -578,11 +578,11 @@ function send_mail($type, $json, $codes) {
   else {
     return FALSE;
   }
-  echo $message;
-  echo $alt_message;
+  //echo $message;
+  //echo $alt_message;
   require_once('class.phpmailer.php');
   require_once('class.smtp.php');
-/*
+
   $mail = new PHPMailer();
   $mail->IsSMTP(); // telling the class to use SMTP
   $mail->SMTPDebug = false;
@@ -598,14 +598,19 @@ function send_mail($type, $json, $codes) {
   $mail->Body = $message;
   $mail->AltBody = $alt_message;
   //$mail->MsgHTML($message);
-  $mail->AddAddress('f.latum@ppl.nl');//$email);
+  
+  //debugging: delete the following 3 lines in production
+  $email = 'f.latum@ppl.nl';
+  $mail->AddCC('a.janson@ppl.nl');
+  $mail->AddCC('j.verweij@ppl.nl');
+  
+  
+  $mail->AddAddress($email);
   if($mail->Send()) {
     return TRUE;
   }
   else {
     return FALSE;
   }
-  */
-  return TRUE;
 }
 

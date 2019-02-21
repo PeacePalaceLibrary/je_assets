@@ -1,6 +1,7 @@
 Dear customer,
 
-Thank you for applying for a library card online.
+Thank you for registering. You need to activate your account.
+
 Please copy the following URL in your browser:
 {{url}}?je_ac={{code}}
 
