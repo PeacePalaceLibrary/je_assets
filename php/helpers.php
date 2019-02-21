@@ -302,7 +302,7 @@ function activate_customer($ppid, $userName, $barcode, $json) {
     "activationCode='$code', ".
     "activated=TRUE,".
     "datetime=NOW()".
-    "WHERE userName='".$userName."'";
+    " WHERE userName='".$userName."'";
     $result = $mysqli->query($q);
   }
   mysqli_close($mysqli);
@@ -324,12 +324,14 @@ function update_customer($changed_json) {
   $new_member = FALSE;
   $ppid = $old_row['ppid'];
   $barcode = $old_row['barcode'];
+  $activated = $old_row['activated'];
   if (strlen($old_row['ppid']) > 0) {
     //the user is present in WMS
     if ($changed_json['services']['membership'] == 'No') {
       //the user wants to stop membership
       $ppid = '';
       $barcode = '';
+      $activated = FALSE;
       //update in WMS?
     }
     else {
@@ -350,7 +352,8 @@ function update_customer($changed_json) {
           else {
             //barcode is indeed new in WMS
             $ppid = wms_create($barcode,$changed_json);
-            if (strlen($ppid) > 0) $errors[] = 'wms_create failed.';
+            if (strlen($ppid) == 0) $errors[] = 'wms_create failed.';
+            $activated = FALSE;
           }
 
     }
@@ -377,7 +380,7 @@ function update_customer($changed_json) {
     "ppid='$ppid',".
     "barcode='$barcode',".
     "datetime=NOW()".
-    "WHERE userName='".$changed_json['id']['userName']."'";
+    " WHERE userName='".$changed_json['id']['userName']."'";
     $res = $mysqli->query($q);
     if ($res === FALSE) {
       $errors[] = 'mysqli_error: '.mysqli_error($mysqli);

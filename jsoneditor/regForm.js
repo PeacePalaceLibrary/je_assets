@@ -60,7 +60,7 @@ editor.on('ready',function() {
     if(errors.length) {
       //collect and show error messages
       if (debug) console.log(errors);
-      msg = '<p>Your request has NOT been sent. Correct the following fields:';
+      msg = '<p>Your request has NOT been sent. Correct the following fields:<br/>';
       errors.forEach(function(err) {
         var fname = editor.getEditor(err.path).schema.title;
         var parts = err.path.split('.');
