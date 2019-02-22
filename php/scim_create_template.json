@@ -40,7 +40,7 @@
   
   "addresses": [
   {
-    "streetAddress": "{% if address.address2|length > 0 %} {{address.address1}}\n{{address.address2}} {% else %} {{address.address1}} {% endif %}",
+    "streetAddress": "{{address.address1}}",
     "locality": "{{address.city}}",
     {% if address.state|length > 0 %}
     "region": "{{address.state}}",
@@ -76,7 +76,8 @@
     "institutionId": "57439",
     "oclcNamespace": "urn:oclc:platform:57439",
     "oclcUsername": "{{id.userName}}",
-    "oclcPassword": "{{id.password}}"{% if person.dateBirth|length > 0 %},
+    "oclcPassword": "{{id.password}}",
+    "oclcExpirationDate": "{{extra.expDate}}"{% if person.dateBirth|length > 0 %},
     "dateOfBirth": "{{person.dateBirth}}"{% endif %}{% if person.gender|length > 0 %},
     "gender": {% if person.gender == "male" %} "MALE" {% elseif person.gender == 'female' %} "FEMALE" {% else %} "UNKNOWN" {% endif %}{% endif %}
   },

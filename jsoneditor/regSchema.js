@@ -104,12 +104,8 @@ regSchemaObj =
       properties: {
         address1: {
           type: "string",
-          title: "Address line *",
+          title: "Address *",
           minLength: 1
-        },
-        address2: {
-          type: "string",
-          title: "Second address line"
         },
         postcode: {
           type: "string",
@@ -146,7 +142,10 @@ regSchemaObj =
         membershipPeriod: {
           type: "select",
           title: "For which period?",
-          enum: ["For one year","For a few days"]
+          options: {
+            enum_titles: ["For one year","For a few days"]
+          },
+          enum: ["year","week"] 
         },
         receiveMails:{
           type: "select",

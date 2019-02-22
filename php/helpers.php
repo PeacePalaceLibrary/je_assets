@@ -242,7 +242,7 @@ function new_customer($json) {
           else {
             //barcode is indeed new in WMS
             $ppid = wms_create($barcode,$json);
-            if (strlen($ppid) == 0) $errors[] = 'wms_create failed.';
+            if (strlen($ppid) == 0) $errors[] = 'new_customer - wms_create failed.';
           }
         }
         
@@ -356,7 +356,7 @@ function update_customer($changed_json) {
           else {
             //barcode is indeed new in WMS
             $ppid = wms_create($barcode,$changed_json);
-            if (strlen($ppid) == 0) $errors[] = 'wms_create failed.';
+            if (strlen($ppid) == 0) $errors[] = 'update_customer - wms_create failed.';
             $activated = FALSE;
           }
 
@@ -468,22 +468,23 @@ function wms_create($barcode,$json) {
   'barcode' => $barcode,
   'country' => get_countrycode($json['address']['country']),
   'date' => date("Y-m-d"),
+  'expDate' => date('Y-m-d\TH:i:s\Z'),
   'blocked' => 'true',
   'verified' => 'false'
   );
-  //file_put_contents('form.json',json_encode($json, JSON_PRETTY_PRINT));
+  file_put_contents('form.json',json_encode($json, JSON_PRETTY_PRINT));
 
   $loader = new Twig_Loader_Filesystem(__DIR__);
   $twig = new Twig_Environment($loader, array(
   //specify a cache directory only in a production setting
   //'cache' => './compilation_cache',
   ));
-  $scim_json = $twig->render('scim_user_template.json', $json);
-  //file_put_contents('form_scim.json',json_encode($scim_json, JSON_PRETTY_PRINT));
+  $scim_json = $twig->render('scim_create_template.json', $json);
+  file_put_contents('form_scim.json',json_encode($scim_json, JSON_PRETTY_PRINT));
 
   $patron = new Patron();
   $patron->create_patron($scim_json);
-  //file_put_contents('form_response.json',json_encode($patron->create, JSON_PRETTY_PRINT));
+  file_put_contents('form_response.json',json_encode($patron->create, JSON_PRETTY_PRINT));
 
   return array_key_exists('id',$patron->create) ? $patron->create['id'] : '';
 }
@@ -496,9 +497,12 @@ function wms_create($barcode,$json) {
 * returns TRUE or FALSE
 */
 function wms_activate($ppid, $barcode, $json){
+  //calculate expiry date
+  $expDate = ($json['services']['membershipPeriod'] == "week") ? date('Y-m-d\TH:i:s\Z', strtotime("+9 days")) : date('Y-m-d\TH:i:s\Z', strtotime("+1 year"));
   $json['extra'] = array(
   'barcode' => $barcode,
   'date' => date("Y-m-d"),
+  'expDate' => $expDate,
   'blocked' => 'false',
   'verified' => 'true'
   );

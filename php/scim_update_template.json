@@ -40,7 +40,7 @@
   
   "addresses": [
   {
-    "streetAddress": "{% if address.address2|length > 0 %} {{address.address1}}\n{{address.address2}} {% else %} {{address.address1}} {% endif %}",
+    "streetAddress": "{{address.address1}}",
     "locality": "{{address.city}}",
     {% if address.state|length > 0 %}
     "region": "{{address.state}}",

@@ -11,7 +11,8 @@
   "urn:mace:oclc.org:eidm:schema:persona:persona:20180305": {
     "institutionId": "57439",
     "oclcUsername": "{{id.userName}}",
-    "oclcPassword": "{{id.password}}"
+    "oclcPassword": "{{id.password}}",
+    "oclcExpirationDate": "{{extra.expDate}}"
   },
   "urn:mace:oclc.org:eidm:schema:persona:wmscircpatroninfo:20180101": {
     "circulationInfo": {
