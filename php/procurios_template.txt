@@ -1,0 +1,20 @@
+LS,
+
+Nieuwe inschrijving nieuwsbrief.
+
+    First Name: {{person.firstName}}
+    Last Name:  {{person.lastName}}
+    Email:      {{person.email}}
+    Birth date: {{person.dateBirth}}
+    Gender:     {{person.gender}}
+    Address:    {{address.adress1}}
+    Postcode:   {{address.postcode}}
+    City:       {{address.city}}
+    Country:    {{address.country}}
+    
+    Institution type: {{inst.instType}}
+    Institution name: {{inst.instName}}
+
+
+Groet,
+Peace Palace Library

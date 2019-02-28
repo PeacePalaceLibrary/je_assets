@@ -147,6 +147,8 @@ regSchemaObj =
           },
           enum: ["year","week"] 
         },
+/*
+receiveMails en receiveNews uitgezet - zie ook regValidators.js voor validatie op: 1 van de services moet op Yes staan
         receiveMails:{
           type: "select",
           title: "Do you want to receive mails send by the library?",
@@ -156,7 +158,7 @@ regSchemaObj =
           type: "select",
           title: "Do you want to receive the newsletter of the library?",
           enum: ["","Yes","No"]
-        },
+        },*/
         receiveAlerts: {
           id: "receiveAlerts",
           type: "select",

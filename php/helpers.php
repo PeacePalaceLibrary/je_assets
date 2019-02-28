@@ -310,7 +310,7 @@ function activate_customer($ppid, $userName, $barcode, $json) {
 
   if ($result === TRUE) {
     send_mail('confirmation',$json, array('barcode' => $barcode,'code' => $code));
-    //if ($json['services']['receiveNews'] =='Yes') send mail naar "Janneke" van M&C om over te typen in procurios
+    if ($json['services']['receiveNews'] =='Yes') send_mail('procurios',$json, array('barcode' => $barcode,'code' => $code));
   }
   return $result;
 }
@@ -568,11 +568,13 @@ function get_countrycode($country) {
 *  $type = barcode
 */
 function send_mail($type, $json, $codes) {
+  //initialize Twig
   $loader = new Twig_Loader_Filesystem(__DIR__);
   $twig = new Twig_Environment($loader, array(
   //specify a cache directory only in a production setting
   //'cache' => './compilation_cache',
   ));
+  
   if ($type == 'activation') {
     $twigins = array('url' => JE_ACT_URL, 'code' => $codes['code']);
     $alt_message = $twig->render('activation_template.txt', $twigins);
@@ -582,6 +584,10 @@ function send_mail($type, $json, $codes) {
     $twigins = array('username' => $json['id']['userName'],'barcode' => $codes['barcode'], 'services' => $json['services']);
     $alt_message = $twig->render('confirmation_template.txt', $twigins);
     $message = $twig->render('confirmation_template.html', $twigins);
+  }
+  else if ($type == 'procurios') {
+    $alt_message = $twig->render('procurios_template.txt', $json);
+    $message = $twig->render('procurios_template.html', $json);
   }
   else {
     return FALSE;
@@ -607,8 +613,12 @@ function send_mail($type, $json, $codes) {
   $mail->AltBody = $alt_message;
   //$mail->MsgHTML($message);
   
-  $recipient = $json['id']['userName'];
-
+  if ($type == 'procurios') {
+    $recipient = JE_MAIL_PROCURIOS;
+  }
+  else {
+    $recipient = $json['id']['userName'];
+  }
   //debugging: delete the following 3 lines in production
   $recipient = 'f.latum@ppl.nl';
   $mail->AddCC('a.janson@ppl.nl');
